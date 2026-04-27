@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url  # ✅ IMPORTANT (added)
 
 load_dotenv()
 
@@ -58,16 +59,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
+
+# ✅ FIXED DATABASE (RENDER SUPPORT)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'playto'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-        'HOST': os.environ.get('DB_HOST', 'db'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL')
+    )
 }
+
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -77,12 +76,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Celery (ONLY worker, no beat)
+
+# ✅ CELERY (NO CHANGE)
 CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://redis:6379/0')
 
-# CORS
-# CORS
+
+# ✅ CORS
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_HEADERS = [
@@ -93,7 +93,8 @@ CORS_ALLOW_HEADERS = [
     "Idempotency-Key",
 ]
 
-# DRF
+
+# ✅ DRF
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
