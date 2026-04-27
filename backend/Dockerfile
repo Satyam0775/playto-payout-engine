@@ -12,4 +12,4 @@ COPY backend/ .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate && python manage.py seed_data && gunicorn project.wsgi:application --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py seed_data && celery -A project worker --loglevel=info & gunicorn project.wsgi:application --bind 0.0.0.0:8000"]
