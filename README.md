@@ -24,6 +24,28 @@ docker-compose up --build
 # Backend API:    http://localhost:8001/api/v1/
 ```
 
+> The Celery worker automatically processes payouts in the background. No manual worker setup is needed in Docker mode.
+
+---
+
+## How it Works (Flow)
+
+```
+User submits payout request
+        ↓
+POST /api/v1/payouts/ (with Idempotency-Key header)
+        ↓
+Django validates request + checks available balance
+        ↓
+Payout record created in DB (status: pending) + funds held via ledger DEBIT
+        ↓
+Celery task dispatched to background worker
+        ↓
+Worker transitions payout to processing → simulates bank settlement (~3s delay)
+        ↓
+Payout marked completed → React dashboard polls and reflects updated status
+```
+
 ---
 
 ## Manual Setup
@@ -105,7 +127,7 @@ curl -X POST http://localhost:8001/api/v1/payouts/ \
 
 ## Payout Lifecycle
 
-Payouts are processed **asynchronously** by a Celery worker that simulates real bank settlement. The full state flow is:
+Payouts are processed **asynchronously** by a Celery worker that simulates real bank settlement. This simulates real bank processing using background workers with delay. The full state flow is:
 
 ```
 pending → processing → completed
@@ -131,6 +153,16 @@ python manage.py test tests
 Tests cover:
 - `test_concurrency.py` — Two simultaneous 60-rupee requests on 100-rupee balance; exactly one succeeds
 - `test_idempotency.py` — Same Idempotency-Key returns identical response, no duplicate created
+
+---
+
+## Key Features
+
+- **Async payout processing** — Celery worker handles all payout state transitions in the background
+- **Idempotent API** — safe to retry; duplicate requests return the original response, never create duplicate payouts
+- **Ledger-based balance system** — balance is always derived from credits minus debits, never stored directly
+- **Retry handling for stuck payouts** — exponential backoff with automatic failure and refund after 3 attempts
+- **Dockerized full system** — single `docker-compose up --build` starts every service
 
 ---
 
