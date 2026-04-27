@@ -1,12 +1,11 @@
 // ---------------- IMPORTS ----------------
 import axios from 'axios'
 
+// ---------------- BASE URL ----------------
 
-// ---------------- BASE URL (DOMAIN SETUP) ----------------
-
-// Use env if available, else fallback to local backend
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001'
-
+// IMPORTANT: use correct env variable from Vercel
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001'
 
 // ---------------- AXIOS CLIENT ----------------
 
@@ -16,7 +15,6 @@ const client = axios.create({
     'Content-Type': 'application/json',
   },
 })
-
 
 // ---------------- UUID GENERATOR ----------------
 
@@ -31,7 +29,6 @@ export function generateUUID() {
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
   })
 }
-
 
 // ---------------- GET APIs ----------------
 
@@ -54,8 +51,7 @@ export const fetchLedger = (merchantId) =>
 export const fetchPayout = (payoutId) =>
   client.get(`/payouts/${payoutId}/`)
 
-
-// ---------------- POST API (FINAL FIXED) ----------------
+// ---------------- POST API ----------------
 
 // Create payout
 export const createPayout = (
@@ -73,13 +69,11 @@ export const createPayout = (
     },
     {
       headers: {
-        // ALWAYS send valid UUID (critical for backend)
+        // Always send UUID (important for idempotency)
         'Idempotency-Key': idempotencyKey || generateUUID(),
       },
     }
   )
 
-
 // ---------------- EXPORT ----------------
-
 export default client
